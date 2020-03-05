@@ -134,7 +134,7 @@ def generate_original_preds(train=True):
 
     if train:
         filepath="models/original.hdf5"
-        checkpoint = ModelCheckpoint(filepath, monitor='val_acc',
+        checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy',
             verbose=1, save_best_only=True, mode='max')
         callbacks_list = [checkpoint]
         model.fit(
