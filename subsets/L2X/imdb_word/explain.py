@@ -21,6 +21,7 @@ import tensorflow as tf
 from subsets.L2X.imdb_word.utils import create_dataset_from_score, calculate_acc
 from sklearn.model_selection import train_test_split
 from subsets.sample_subsets import sample_subset
+from subsets.sample_knapsack import sample_knapsack
 
 
 # Set parameters:
@@ -246,6 +247,30 @@ class SampleSubset(Layer):
     def compute_output_shape(self, input_shape):
         return input_shape
 
+class SampleKnapsack(Layer):
+    """
+    Layer for continous knapsack sampling
+
+    """
+    def __init__(self, tau0, k, **kwargs):
+        self.tau0 = tau0
+        self.k = k
+        super(SampleKnapsack, self).__init__(**kwargs)
+
+    def call(self, logits):
+        # logits: [BATCH_SIZE, d, 1]
+        logits = tf.squeeze(logits, 2)
+        samples = sample_knapsack(logits, self.k, self.tau0)
+
+        # Explanation Stage output.
+        threshold = tf.expand_dims(tf.nn.top_k(logits, self.k, sorted = True)[0][:,-1], -1)
+        discrete_logits = tf.cast(tf.greater_equal(logits,threshold),tf.float32)
+        output = K.in_train_phase(samples, discrete_logits)
+        return tf.expand_dims(output,-1)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
 
 def construct_gumbel_selector(X_ph, num_words, embedding_dims, maxlen):
     """
@@ -296,9 +321,14 @@ def L2X(train = True, task='l2x', tau=0.01):
         if task == 'subsets':
             subset_sampler = SampleSubset(tau, k)
             T = subset_sampler(logits_T)
-        else:
+        elif task == 'l2x':
             subset_sampler = SampleConcrete(tau, k)
             T = subset_sampler(logits_T)
+        elif task == 'knapsack':
+            subset_sampler = SampleKnapsack(tau, k)
+            T = subset_sampler(logits_T)
+        else:
+            raise ValueError
 
     # q(X_S)
     with tf.variable_scope('prediction_model'):
@@ -354,7 +384,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', type = str,
-        choices = ['original','l2x', 'subsets'], default = 'original')
+        choices = ['original','l2x', 'subsets', 'knapsack'], default = 'original')
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--tau', type=float, default=0.01)
     parser.set_defaults(train=False)
