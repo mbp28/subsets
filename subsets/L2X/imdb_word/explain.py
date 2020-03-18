@@ -279,7 +279,7 @@ class SampleLML(Layer):
     def __init__(self, tau0, k, **kwargs):
         self.tau0 = tau0
         self.k = k
-        super(SampleSubset, self).__init__(**kwargs)
+        super(SampleLML, self).__init__(**kwargs)
 
     def call(self, logits):
         # logits: [BATCH_SIZE, d, 1]
