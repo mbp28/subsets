@@ -27,8 +27,6 @@ from subsets.sample_lml import sample_lml
 
 
 # Set parameters:
-tf.set_random_seed(10086)
-np.random.seed(10086)
 max_features = 5000
 maxlen = 400
 batch_size = 40
@@ -384,8 +382,8 @@ def L2X(train = True, task='l2x', tau=0.01):
         x_train, x_train_val, pred_train, pred_train_val = train_test_split(
             x_train, pred_train, test_size=0.1, random_state=111)
 
-        filepath=f"models/{task}-{tau}.hdf5"
-        model.save_weights(f"models/initial-{task}-{tau}.hdf5")
+        filepath=f"models/{task}-{tau}-{seed}.hdf5"
+        model.save_weights(f"models/initial-{task}-{tau}-{seed}.hdf5")
         checkpoint = ModelCheckpoint(filepath, monitor='val_loss',
             verbose=1, save_best_only=True, mode='auto')
         callbacks_list = [checkpoint]
@@ -397,7 +395,7 @@ def L2X(train = True, task='l2x', tau=0.01):
         duration = time.time() - st
         print('Training time is {}'.format(duration))
 
-    model.load_weights(f'models/{task}-{tau}.hdf5', by_name=True)
+    model.load_weights(f'models/{task}-{tau}-{seed}.hdf5', by_name=True)
 
     pred_model = Model(X_ph, logits_T)
     pred_model.compile(loss='categorical_crossentropy',
@@ -414,12 +412,17 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', type = str,
-        choices = ['original','l2x', 'subsets', 'knapsack'], default = 'original')
+        choices = ['original','l2x', 'subsets', 'knapsack', 'lml'], default = 'original')
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--tau', type=float, default=0.01)
+    parser.add_argument('--seed', type=int, default=0)
     parser.set_defaults(train=False)
     args = parser.parse_args()
     print(args)
+    # Set Seed
+    seed = args.seed
+    tf.set_random_seed(seed)
+    np.random.seed(seed)
 
     if args.task == 'original':
         generate_original_preds(args.train)
