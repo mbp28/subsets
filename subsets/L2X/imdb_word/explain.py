@@ -383,7 +383,6 @@ def L2X(train = True, task='l2x', tau=0.01):
             x_train, pred_train, test_size=0.1, random_state=111)
 
         filepath=f"models/{task}-{tau}-{seed}.hdf5"
-        model.save_weights(f"models/initial-{task}-{tau}-{seed}.hdf5")
         checkpoint = ModelCheckpoint(filepath, monitor='val_loss',
             verbose=1, save_best_only=True, mode='auto')
         callbacks_list = [checkpoint]
