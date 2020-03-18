@@ -23,7 +23,7 @@ def sample_lml(w, k, t=0.1):
     '''
     lml_func = get_lml_func(k, eps=1e-6, n_iter=100, branch=None, verbose=0)
     w = gumbel_keys(w) / t
-    y = lml_func(x)
+    y = lml_func(w)
     return y
 
 def get_lml_func(k, eps=1e-6, n_iter=100, branch=None, verbose=0):
