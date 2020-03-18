@@ -11,7 +11,7 @@ def get_selected_words(x_single, score, id_to_word, k):
     return x_selected
 
 
-def create_dataset_from_score(x, scores, k, task, tau):
+def create_dataset_from_score(x, scores, k, task, tau, seed):
     with open('data/id_to_word.pkl', 'rb') as f:
         id_to_word = pickle.load(f)
     new_data = []
@@ -19,7 +19,7 @@ def create_dataset_from_score(x, scores, k, task, tau):
         x_selected = get_selected_words(x_single, scores[i], id_to_word, k)
         new_data.append(x_selected)
 
-    np.save(f'data/x_val-{task}-{tau}.npy', np.array(new_data))
+    np.save(f'data/x_val-{task}-{tau}-{seed}.npy', np.array(new_data))
 
 
 def calculate_acc(pred, y):

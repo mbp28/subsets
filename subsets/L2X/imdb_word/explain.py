@@ -428,4 +428,4 @@ if __name__ == '__main__':
     else:
         scores, x = L2X(args.train, task=args.task, tau=args.tau)
         print('Creating dataset with selected sentences...')
-        create_dataset_from_score(x, scores, k, args.task, args.tau)
+        create_dataset_from_score(x, scores, k, args.task, args.tau, args.seed)
