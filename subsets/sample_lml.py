@@ -26,7 +26,7 @@ def sample_lml(w, k, t=0.1):
     y = lml_func(w)
     return y
 
-def get_lml_func(k, eps=1e-6, n_iter=100, branch=None, verbose=0):
+def get_lml_func(k, eps=1e-4, n_iter=100, branch=None, verbose=0):
     r'''we define a closure to return the tensorflow function which is
     applied on x'''
     @tf.custom_gradient
