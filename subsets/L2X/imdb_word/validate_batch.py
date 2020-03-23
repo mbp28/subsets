@@ -10,6 +10,7 @@ from subsets.L2X.imdb_word.explain import create_original_model
 
 
 def main():
+    ks = [10]
     seeds = range(1,20)
     tasks = ['l2x', 'subsets', 'knapsack', 'lml']
     taus = [0.1, 0.5, 1.0, 2.0, 5.0]
@@ -21,25 +22,25 @@ def main():
     model.load_weights('./models/' + weights_name, by_name=True)
     # Load original predictions
     pred_val = np.load('data/pred_val.npy')
+    for k in ks:
+        for task in tasks:
+            for tau in taus:
+                accs = []
+                for seed in seeds:
+                    acc = test(model, pred_val, task, tau, seed)
+                    accs.append(acc)
+                mean = np.mean(accs)
+                std = np.std(accs)
+                print('k: {}, Task: {}'.format(k, task))
+                print('\t Tau: {:.2f}'.format(tau))
+                print('\t \t Test Acc: {:.3f} ± {:.3f}'.format(mean, std))
 
-    for task in tasks:
-        for tau in taus:
-            accs = []
-            for seed in seeds:
-                acc = test(model, pred_val, task, tau, seed)
-                accs.append(acc)
-            mean = np.mean(accs)
-            std = np.std(accs)
-            print('Task {}'.format(task))
-            print('\t Tau {:.2f}'.format(tau))
-            print('\t \t Test Acc {:.3f} ± {:.3f}'.format(mean, std))
-
-def test(model, pred_val, task, tau, seed): # model is original model
-    fname = f'data/pred_val-{task}-{tau}-{seed}.npy'
+def test(model, pred_val, k, task, tau, seed): # model is original model
+    fname = f'data/pred_val-{k}-{task}-{tau}-{seed}.npy'
     if os.path.exists(fname):
         new_pred_val = np.load(fname)
     else:
-        x_val_selected = np.load(f'data/x_val-{task}-{tau}-{seed}.npy')
+        x_val_selected = np.load(f'data/x_val-{k}-{task}-{tau}-{seed}.npy')
         new_pred_val = model.predict(x_val_selected, verbose=1, batch_size=1000)
         np.save(fname, new_pred_val)
 
