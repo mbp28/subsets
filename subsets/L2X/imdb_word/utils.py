@@ -19,7 +19,7 @@ def create_dataset_from_score(x, scores, k, task, tau, seed):
         x_selected = get_selected_words(x_single, scores[i], id_to_word, k)
         new_data.append(x_selected)
 
-    np.save(f'data/x_val-{task}-{tau}-{seed}.npy', np.array(new_data))
+    np.save(f'data/x_val-{k}-{task}-{tau}-{seed}.npy', np.array(new_data))
 
 
 def calculate_acc(pred, y):
