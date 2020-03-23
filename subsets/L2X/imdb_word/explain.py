@@ -35,7 +35,6 @@ filters = 250
 kernel_size = 3
 hidden_dims = 250
 original_epochs = 5
-k = 10  # Number of selected words by L2X.
 PART_SIZE = 125
 
 ###########################################
@@ -130,6 +129,7 @@ def generate_original_preds(train=True):
     The original model is also trained if train = True.
 
     """
+    k = args.k
     x_train, y_train, x_val, y_val, id_to_word = load_data()
     model = create_original_model()
 
@@ -160,8 +160,7 @@ def generate_original_preds(train=True):
 ####################L2X####################
 ###########################################
 # Define various Keras layers.
-Mean = Lambda(lambda x: K.sum(x, axis = 1) / float(k),
-    output_shape=lambda x: [x[0],x[2]])
+
 
 
 class Concatenate(Layer):
@@ -331,6 +330,7 @@ def L2X(train = True, task='l2x', tau=0.01):
     if train = True.
 
     """
+    k = args.k
     print('Loading dataset...')
     x_train, y_train, x_val, y_val, id_to_word = load_data()
     pred_train = np.load('data/pred_train.npy')
@@ -358,6 +358,9 @@ def L2X(train = True, task='l2x', tau=0.01):
             raise ValueError
 
     # q(X_S)
+    Mean = Lambda(lambda x: K.sum(x, axis = 1) / float(k),
+        output_shape=lambda x: [x[0],x[2]])
+        
     with tf.variable_scope('prediction_model'):
         emb2 = Embedding(max_features, embedding_dims,
             input_length=maxlen)(X_ph)
@@ -382,7 +385,7 @@ def L2X(train = True, task='l2x', tau=0.01):
         x_train, x_train_val, pred_train, pred_train_val = train_test_split(
             x_train, pred_train, test_size=0.1, random_state=111)
 
-        filepath=f"models/{task}-{tau}-{seed}.hdf5"
+        filepath=f"models/{k}-{task}-{tau}-{seed}.hdf5"
         checkpoint = ModelCheckpoint(filepath, monitor='val_loss',
             verbose=1, save_best_only=True, mode='auto')
         callbacks_list = [checkpoint]
@@ -394,7 +397,7 @@ def L2X(train = True, task='l2x', tau=0.01):
         duration = time.time() - st
         print('Training time is {}'.format(duration))
 
-    model.load_weights(f'models/{task}-{tau}-{seed}.hdf5', by_name=True)
+    model.load_weights(f'models/{k}-{task}-{tau}-{seed}.hdf5', by_name=True)
 
     pred_model = Model(X_ph, logits_T)
     pred_model.compile(loss='categorical_crossentropy',
@@ -415,6 +418,7 @@ if __name__ == '__main__':
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--tau', type=float, default=0.01)
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--k', type=int, default=10)
     parser.set_defaults(train=False)
     args = parser.parse_args()
     print(args)
@@ -428,4 +432,4 @@ if __name__ == '__main__':
     else:
         scores, x = L2X(args.train, task=args.task, tau=args.tau)
         print('Creating dataset with selected sentences...')
-        create_dataset_from_score(x, scores, k, args.task, args.tau, args.seed)
+        create_dataset_from_score(x, scores, args.k, args.task, args.tau, args.seed)
