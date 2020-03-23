@@ -10,7 +10,7 @@ from subsets.L2X.imdb_word.explain import create_original_model
 
 
 def main():
-    seeds = range(1,3)
+    seeds = range(1,20)
     tasks = ['l2x', 'subsets', 'knapsack', 'lml']
     taus = [0.1, 0.5, 1.0, 2.0, 5.0]
 
