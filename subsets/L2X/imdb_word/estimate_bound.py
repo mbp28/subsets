@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from subsets.sample_knapsack import gumbel_keys
 
 def main(k, task, tau, seed):
-    num_epochs = 10
+    num_epochs = 2
     checkpoint= {}
     # Get data
     x_train, y_train, x_test, y_test, id_to_word = _explain.load_data()
@@ -44,8 +44,9 @@ def main(k, task, tau, seed):
         v = evaluate_bound(model, x, y, num_epochs)
         checkpoint[bound] = v
     # Save checkpoint
+    print(checkpoint)
     with open(f'bounds/{k}-{task}-{tau}-{seed}.pkl', 'wb') as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(checkpoint, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 def evaluate_bound(model, x_data, pred_data, num_epochs):
     bound = AverageMeter()
