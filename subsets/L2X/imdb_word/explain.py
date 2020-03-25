@@ -197,6 +197,12 @@ class SampleConcrete(Layer):
         super(SampleConcrete, self).__init__(**kwargs)
 
     def call(self, logits):
+        samples = self.sample(logits)
+        mode = self.mode(logits)
+        output = K.in_train_phase(samples, mode)
+        return output
+
+    def sample(self, logits):
         # logits: [batch_size, d, 1]
         logits_ = K.permute_dimensions(logits, (0,2,1))# [batch_size, 1, d]
 
@@ -211,12 +217,13 @@ class SampleConcrete(Layer):
         noisy_logits = (gumbel + logits_)/ self.tau0
         samples = K.softmax(noisy_logits)
         samples = K.max(samples, axis = 1)
+        return tf.expand_dims(samples,-1)
+
+    def mode(self, logits):
         logits = tf.reshape(logits,[-1, d])
         threshold = tf.expand_dims(tf.nn.top_k(logits, self.k, sorted = True)[0][:,-1], -1)
         discrete_logits = tf.cast(tf.greater_equal(logits,threshold),tf.float32)
-
-        output = K.in_train_phase(samples, discrete_logits)
-        return tf.expand_dims(output,-1)
+        return tf.expand_dims(discrete_logits,-1)
 
     def compute_output_shape(self, input_shape):
         return input_shape
@@ -233,15 +240,21 @@ class SampleSubset(Layer):
         super(SampleSubset, self).__init__(**kwargs)
 
     def call(self, logits):
-        # logits: [BATCH_SIZE, d, 1]
+        samples = self.sample(logits)
+        mode = self.mode(logits)
+        output = K.in_train_phase(samples, mode)
+        return output
+
+    def sample(self, logits):
         logits = tf.squeeze(logits, 2)
         samples = sample_subset(logits, self.k, self.tau0)
+        return tf.expand_dims(samples,-1)
 
-        # Explanation Stage output.
+    def mode(self, logits):
+        logits = tf.squeeze(logits, 2)
         threshold = tf.expand_dims(tf.nn.top_k(logits, self.k, sorted = True)[0][:,-1], -1)
         discrete_logits = tf.cast(tf.greater_equal(logits,threshold),tf.float32)
-        output = K.in_train_phase(samples, discrete_logits)
-        return tf.expand_dims(output,-1)
+        return tf.expand_dims(discrete_logits,-1)
 
     def compute_output_shape(self, input_shape):
         return input_shape
@@ -257,15 +270,21 @@ class SampleKnapsack(Layer):
         super(SampleKnapsack, self).__init__(**kwargs)
 
     def call(self, logits):
-        # logits: [BATCH_SIZE, d, 1]
+        samples = self.sample(logits)
+        mode = self.mode(logits)
+        output = K.in_train_phase(samples, mode)
+        return output
+
+    def sample(self, logits):
         logits = tf.squeeze(logits, 2)
         samples = sample_knapsack(logits, self.k, self.tau0)
+        return tf.expand_dims(samples,-1)
 
-        # Explanation Stage output.
+    def mode(self, logits):
+        logits = tf.squeeze(logits, 2)
         threshold = tf.expand_dims(tf.nn.top_k(logits, self.k, sorted = True)[0][:,-1], -1)
         discrete_logits = tf.cast(tf.greater_equal(logits,threshold),tf.float32)
-        output = K.in_train_phase(samples, discrete_logits)
-        return tf.expand_dims(output,-1)
+        return tf.expand_dims(discrete_logits,-1)
 
     def compute_output_shape(self, input_shape):
         return input_shape
@@ -281,15 +300,21 @@ class SampleLML(Layer):
         super(SampleLML, self).__init__(**kwargs)
 
     def call(self, logits):
-        # logits: [BATCH_SIZE, d, 1]
+        samples = self.sample(logits)
+        mode = self.mode(logits)
+        output = K.in_train_phase(samples, mode)
+        return output
+
+    def sample(self, logits):
         logits = tf.squeeze(logits, 2)
         samples = sample_lml(logits, self.k, self.tau0)
+        return tf.expand_dims(samples,-1)
 
-        # Explanation Stage output.
+    def mode(self, logits):
+        logits = tf.squeeze(logits, 2)
         threshold = tf.expand_dims(tf.nn.top_k(logits, self.k, sorted = True)[0][:,-1], -1)
         discrete_logits = tf.cast(tf.greater_equal(logits,threshold),tf.float32)
-        output = K.in_train_phase(samples, discrete_logits)
-        return tf.expand_dims(output,-1)
+        return tf.expand_dims(discrete_logits,-1)
 
     def compute_output_shape(self, input_shape):
         return input_shape
@@ -360,7 +385,7 @@ def L2X(train = True, task='l2x', tau=0.01):
     # q(X_S)
     Mean = Lambda(lambda x: K.sum(x, axis = 1) / float(k),
         output_shape=lambda x: [x[0],x[2]])
-        
+
     with tf.variable_scope('prediction_model'):
         emb2 = Embedding(max_features, embedding_dims,
             input_length=maxlen)(X_ph)
