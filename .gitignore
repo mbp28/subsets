@@ -116,3 +116,5 @@ Pipfile.lock
 *.hdf5
 *.pkl
 *.png
+*.DS_Store # Mac
+*.ipynb # ignore notebooks

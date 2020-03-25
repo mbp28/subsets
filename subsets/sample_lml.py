@@ -64,7 +64,6 @@ def lml_func_forward(x, k, eps, n_iter, branch, verbose):
 
     def _loop(lower, upper):
         # dependencies
-        print('loop')
         r = upper - lower # vector of size batchsize
         mask = r > eps
         n_update = tf.reduce_sum(tf.cast(mask, tf.int32))
