@@ -117,5 +117,5 @@ def csoftmax(tensor, inv_cumulative_att):
     shape_cum = inv_cumulative_att.shape
 
     merge_tensor = [tensor, inv_cumulative_att]
-    cs, _ = tf.map_fn(csoftmax_for_slice, merge_tensor, dtype=[tf.float32, tf.float32])  # [bs, L]
+    cs, _ = tf.map_fn(csoftmax_for_slice, merge_tensor, dtype=[tf.float32, tf.int32])  # [bs, L]
     return cs
