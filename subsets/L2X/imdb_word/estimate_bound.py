@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from subsets.sample_knapsack import gumbel_keys
 
 def main(k, task, tau, seed):
-    num_epochs = 1
+    num_epochs = 50
     checkpoint= {}
     # Get data
     x_train, y_train, x_test, y_test, id_to_word = _explain.load_data()
