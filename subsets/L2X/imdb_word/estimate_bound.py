@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from subsets.sample_knapsack import gumbel_keys
 
 def main(k, task, tau, seed):
-    num_epochs = 2
+    num_epochs = 1
     checkpoint= {}
     # Get data
     x_train, y_train, x_test, y_test, id_to_word = _explain.load_data()
@@ -34,15 +34,16 @@ def main(k, task, tau, seed):
     model.load_weights(f'models/{k}-{task}-{tau}-{seed}.hdf5', by_name=True)
     bounds = ['train_soft', 'val_soft', 'test_soft']
     for bound, (x, y) in  zip(bounds, data):
-        v = evaluate_bound(model, x, y, num_epochs)
-        checkpoint[bound] = v
+       v = evaluate_bound(model, x, y, num_epochs)
+       checkpoint[bound] = v
     # Hard bound
+    K.clear_session() # avoid model clutter, important!
     model = get_model(k, 'hard', tau)
     model.load_weights(f'models/{k}-{task}-{tau}-{seed}.hdf5', by_name=True)
     bounds = ['train_hard', 'val_hard', 'test_hard']
     for bound, (x, y) in  zip(bounds, data):
-        v = evaluate_bound(model, x, y, num_epochs)
-        checkpoint[bound] = v
+       v = evaluate_bound(model, x, y, num_epochs)
+       checkpoint[bound] = v
     # Save checkpoint
     print(checkpoint)
     with open(f'bounds/{k}-{task}-{tau}-{seed}.pkl', 'wb') as f:
@@ -159,99 +160,3 @@ if __name__ == '__main__':
     print(args)
 
     main(args.k, args.task, args.tau, args.seed)
-
-
-#
-#
-# def L2X(train = True, task='l2x', tau=0.01):
-#     """
-#     Generate scores on features on validation by L2X.
-#
-#     Train the L2X model with variational approaches
-#     if train = True.
-#
-#     """
-#     k = args.k
-#     print('Loading dataset...')
-#     x_train, y_train, x_val, y_val, id_to_word = load_data()
-#     pred_train = np.load('data/pred_train.npy')
-#     pred_val = np.load('data/pred_val.npy')
-#     print('Creating model...')
-#
-#     # P(S|X)
-#     with tf.variable_scope('selection_model'):
-#         X_ph = Input(shape=(maxlen,), dtype='int32')
-#
-#         logits_T = construct_gumbel_selector(X_ph, max_features, embedding_dims, maxlen)
-#         if task == 'subsets':
-#             subset_sampler = SampleSubset(tau, k)
-#             T = subset_sampler(logits_T)
-#         elif task == 'l2x':
-#             subset_sampler = SampleConcrete(tau, k)
-#             T = subset_sampler(logits_T)
-#         elif task == 'knapsack':
-#             subset_sampler = SampleKnapsack(tau, k)
-#             T = subset_sampler(logits_T)
-#         elif task == 'lml':
-#             subset_sampler = SampleLML(tau, k)
-#             T = subset_sampler(logits_T)
-#         else:
-#             raise ValueError
-#
-#     # q(X_S)
-#     Mean = Lambda(lambda x: K.sum(x, axis = 1) / float(k),
-#         output_shape=lambda x: [x[0],x[2]])
-#
-#     with tf.variable_scope('prediction_model'):
-#         emb2 = Embedding(max_features, embedding_dims,
-#             input_length=maxlen)(X_ph)
-#
-#         net = Mean(Multiply()([emb2, T]))
-#         net = Dense(hidden_dims)(net)
-#         net = Activation('relu')(net)
-#         preds = Dense(2, activation='softmax',
-#             name = 'new_dense')(net)
-#
-#     model = Model(inputs=X_ph, outputs=preds)
-#
-#     model.compile(loss='categorical_crossentropy',
-#                   optimizer='rmsprop',#optimizer,
-#                   metrics=['acc'])
-#     train_acc = np.mean(np.argmax(pred_train, axis = 1)==np.argmax(y_train, axis = 1))
-#     val_acc = np.mean(np.argmax(pred_val, axis = 1)==np.argmax(y_val, axis = 1))
-#     print('The train and validation accuracy of the original model is {} and {}'.format(train_acc, val_acc))
-#
-#     if train:
-#         # split x_train and pred_train into training and validation
-#         x_train, x_train_val, pred_train, pred_train_val = train_test_split(
-#             x_train, pred_train, test_size=0.1, random_state=111)
-#
-#         filepath=f"models/{k}-{task}-{tau}-{seed}.hdf5"
-#         checkpoint = ModelCheckpoint(filepath, monitor='val_loss',
-#             verbose=1, save_best_only=True, mode='auto')
-#         callbacks_list = [checkpoint]
-#         st = time.time()
-#         model.fit(x_train, pred_train,
-#             validation_data=(x_train_val, pred_train_val),
-#             callbacks = callbacks_list,
-#             epochs=50, batch_size=batch_size)
-#         duration = time.time() - st
-#         print('Training time is {}'.format(duration))
-#
-#     model.load_weights(f'models/{k}-{task}-{tau}-{seed}.hdf5', by_name=True)
-#
-#     pred_model = Model(X_ph, logits_T)
-#     pred_model.compile(loss='categorical_crossentropy',
-#         optimizer='adam', metrics=['acc'])
-#
-#     st = time.time()
-#     scores = pred_model.predict(x_val,
-#         verbose = 1, batch_size = batch_size)[:,:,0]
-#     scores = np.reshape(scores, [scores.shape[0], maxlen])
-#
-#     return scores, x_val
-#
-#
-#
-# def var_bound():
-#     pass
